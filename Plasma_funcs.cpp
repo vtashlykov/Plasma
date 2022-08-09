@@ -15,8 +15,9 @@ complex<double> cintegral(complex<double> a, complex<double> b, unsigned step_co
 	return sum;
 }
 
-vector<double> Spectrum(Plasma_pars P)
+void Spectrum(vector<double> &x, vector<double> &y, Plasma_pars P)
 {
+    x.resize(2*FLENGTH);
 	complex<double> im=complex<double> (0.0, 1.0);
 	complex<double> izero=complex<double> (0.0, 0.0);
 	vector<double> Y(2*FLENGTH), S(2*FLENGTH);
@@ -93,10 +94,60 @@ vector<double> Spectrum(Plasma_pars P)
                 S[i]+=Y[i];
             if(S[i]>S_max)
                 S_max=S[i];
+            x[i]=f=double(i-FLENGTH)*double(DELTAF);
         }
-
     }
 	for(int i=0;i<2*FLENGTH;i++)
 		S[i]/=S_max;
-	return S;
+	y=S;
+}
+
+void Set_pars(string file, Plasma_pars &P)
+{
+    ifstream inp;
+    map<unsigned, double> C;
+    string line;
+    int found;
+
+    inp.open(file);
+    printf("%s\n", file.c_str());
+	getline(inp, line);
+	getline(inp, line);
+	found=line.find_first_of(" = ");
+	P.lambda=stod(line.substr(found+3, line.length()-found-3));
+    printf("lambda %f\n", P.lambda);
+	getline(inp, line);
+    found=line.find_first_of(" = ");
+	P.Ne=stod(line.substr(found+3, line.length()-found-3));
+	printf("Ne %f\n", P.Ne);
+    getline(inp, line);
+    found=line.find_first_of(" = ");
+	P.Te=stod(line.substr(found+3, line.length()-found-3));
+	printf("Te %f\n", P.Te);
+    getline(inp, line);
+    found=line.find_first_of(" = ");
+	P.Ti=stod(line.substr(found+3, line.length()-found-3));
+	printf("Ti %f\n", P.Ti);
+    getline(inp, line);
+    found=line.find_first_of(" = ");
+	P.nu_i=stod(line.substr(found+3, line.length()-found-3));
+	printf("nu_i %f\n", P.nu_i);
+    getline(inp, line);
+    found=line.find_first_of(" = ");
+	P.nu_e=stod(line.substr(found+3, line.length()-found-3));
+	printf("nu_e %f\n", P.nu_e);
+    getline(inp, line);
+    found=line.find_first_of("[");
+    while(found!=-1)
+    {
+        double M=0.0, Cm=0.0;
+        M=stod(line.substr(found+1, 3));
+        found=line.find(" = ");
+        Cm=stod(line.substr(found+3, 3));
+        C[unsigned(M)]=Cm;
+        printf("Con[%3.0f] = %3.0f\n", M, Cm);
+        getline(inp, line);
+        found=line.find_first_of("[");
+    }
+    P.Con=C;
 }
