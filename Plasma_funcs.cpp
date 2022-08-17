@@ -15,9 +15,13 @@ complex<double> cintegral(complex<double> a, complex<double> b, unsigned step_co
 	return sum;
 }
 
-void Spectrum(vector<double> &x, vector<double> &y, Plasma_pars P)
+void Spectrum(double *x, double *y, Plasma_pars P)
 {
-    x.resize(2*FLENGTH);
+	for(size_t i=0; i<2*FLENGTH; i++)
+	{
+		x[i]=0.0;
+		y[i]=0.0;
+	}
 	complex<double> im=complex<double> (0.0, 1.0);
 	complex<double> izero=complex<double> (0.0, 0.0);
 	vector<double> Y(2*FLENGTH), S(2*FLENGTH);
@@ -98,8 +102,7 @@ void Spectrum(vector<double> &x, vector<double> &y, Plasma_pars P)
 		}
     }
 	for(int i=0; i<2*FLENGTH; i++)
-		S[i]/=S_max;
-	y=S;
+		y[i]=S[i]/S_max;
 }
 
 void Set_pars(char* file, Plasma_pars &P)

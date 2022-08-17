@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
 		exit(1);
 	}
 
-    vector<double> f, S;
+    double f[2*FLENGTH], S[2*FLENGTH];
     Plasma_pars P;
 
     Set_pars(argv[1], P);
@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
 
     ofstream out;
 	out.open("Spectrum.dat");
-	for(size_t x=0; x<f.size(); x++)
+	for(size_t x=0; x<2*FLENGTH; x++)
 	{
 		out<<f[x]<<"\t";
 		out<<S[x]<<"\n";

@@ -35,5 +35,5 @@ struct Plasma_pars
 };
 
 complex<double> cintegral(complex<double> a, complex<double> b, unsigned step_count);
-void Spectrum(vector<double> &x, vector<double> &y, Plasma_pars P);
+void Spectrum(double *x, double *y, Plasma_pars P);
 void Set_pars(char* file, Plasma_pars &P);
