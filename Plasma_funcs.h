@@ -21,7 +21,7 @@ struct Plasma_pars
     double Ti; //Температура ионов, K
     double nu_i; //Частота столкновений ионов, Гц
     double nu_e; //Частота столкновений электронов, Гц. Для бесстолкновительной плазмы обе частоты нужно занулить.
-    map<unsigned, double> Con; //Контейнер для ионного состава, где первый компонент - молярная масса иона,
+    double Con[103]; //Контейнер для ионного состава, где первый компонент - молярная масса иона,
         //второй - его процентное сожержание в плазме. Например, для однородой O+ плазмы: Con[8]=100
         //Для 30% NO+ и 70% O+: Con[15]=30, Con[8]=70. Размер контейнера определяет кол-во сортов ионов. 
         //Молярные массы сортов частиц, обитающих в ионосфере Земли:
@@ -36,4 +36,4 @@ struct Plasma_pars
 
 complex<double> cintegral(complex<double> a, complex<double> b, unsigned step_count);
 void Spectrum(vector<double> &x, vector<double> &y, Plasma_pars P);
-void Set_pars(string file, Plasma_pars &P);
+void Set_pars(char* file, Plasma_pars &P);
