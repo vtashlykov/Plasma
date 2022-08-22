@@ -142,15 +142,21 @@ void Set_pars(char* file, Plasma_pars &P)
 	printf("nu_e %f\n", P.nu_e);
     getline(inp, line);
     found=line.find_first_of("[");
+	double C=0.0;
     while(found!=-1)
     {
         double M=0.0, Cm=0.0;
         M=stod(line.substr(found+1, 3));
         found=line.find(" = ");
         Cm=stod(line.substr(found+3, 3));
+		C+=Cm;
         P.Con[unsigned(M)]=Cm;
         printf("Con[%3.0f] = %3.0f\n", M, Cm);
         getline(inp, line);
         found=line.find_first_of("[");
     }
+	if(C!=100.0)
+		fprintf(stderr, "Total relative plasma density is more or less than 100%!\n");
+	for(size_t i=0; i<103; i++)
+		P.Con[i]*=100.0/C;
 }
