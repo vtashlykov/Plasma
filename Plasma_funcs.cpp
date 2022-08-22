@@ -36,12 +36,18 @@ void Spectrum(double *x, double *y, Plasma_pars P)
 	double a, b, w, f, Be, Bi;
 	R=P.Te/P.Ti;
 	k=4.0*PI/P.lambda;
+	
+	double C=0.0;
+	for(size_t M=0; M<103; M++)
+		C+=P.Con[M];
+	if(C!=100.0)
+		fprintf(stderr, "Total relative plasma density is more or less than 100%!\n");
 
     for(size_t M=0; M<103; M++)
     {
 		if(P.Con[M]!=0.0)
 		{
-			double Cm=P.Con[M];
+			double Cm=P.Con[M]/C;
 			double iMass=1.67262177774*double(M);//mass of ion(kg) (*pow(10,-27))
 			a=sqrt(2.0*K*P.Te/eMass)*pow(10.0,4.0);
 			b=sqrt(2.0*K*P.Ti/iMass)*pow(10.0,2.0);
@@ -142,21 +148,15 @@ void Set_pars(char* file, Plasma_pars &P)
 	printf("nu_e %f\n", P.nu_e);
     getline(inp, line);
     found=line.find_first_of("[");
-	double C=0.0;
     while(found!=-1)
     {
         double M=0.0, Cm=0.0;
         M=stod(line.substr(found+1, 3));
         found=line.find(" = ");
         Cm=stod(line.substr(found+3, 3));
-		C+=Cm;
         P.Con[unsigned(M)]=Cm;
         printf("Con[%3.0f] = %3.0f\n", M, Cm);
         getline(inp, line);
         found=line.find_first_of("[");
     }
-	if(C!=100.0)
-		fprintf(stderr, "Total relative plasma density is more or less than 100%!\n");
-	for(size_t i=0; i<103; i++)
-		P.Con[i]*=100.0/C;
 }
