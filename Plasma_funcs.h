@@ -6,10 +6,13 @@
 #include <complex>
 #include <vector>
 #include <map>
+#include "fftw3.h"
 
 #define PI 3.14159265
 #define FLENGTH 5000
 #define DELTAF 10
+#define DELTAT 10
+#define LENGTH 100
 
 using namespace std;
 
@@ -25,15 +28,16 @@ struct Plasma_pars
         //второй - его процентное сожержание в плазме. Например, для однородой O+ плазмы: Con[8]=100
         //Для 30% NO+ и 70% O+: Con[15]=30, Con[8]=70. Размер контейнера определяет кол-во сортов ионов. 
         //Молярные массы сортов частиц, обитающих в ионосфере Земли:
+        //N:7
+        //N2:14
+        //NO:15
+        //O2:16
         //O:8
         //H:2
         //He:1
-        //NO:15
-        //O2:16
-        //N:7
-        //N2:14
 };
 
 complex<double> cintegral(complex<double> a, complex<double> b, unsigned step_count);
-extern "C" void Spectrum(double *x, double *y, Plasma_pars P);
-extern "C" void Set_pars(char* file, Plasma_pars &P);
+extern "C" void Spectrum(double *x, double *y, Plasma_pars *P);
+extern "C" void ACF(double *x, double *y, double *S);
+extern "C" void Set_pars(char* file, Plasma_pars *P);

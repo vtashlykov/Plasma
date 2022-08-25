@@ -6,6 +6,7 @@
 #include <complex>
 #include <vector>
 #include <map>
+#include <fftw3.h>
 #include "Plasma_funcs.h"
 
 using namespace std;
@@ -18,12 +19,14 @@ int main(int argc, char* argv[])
 		exit(1);
 	}
 
-    double f[2*FLENGTH], S[2*FLENGTH];
+    double f[2*FLENGTH], S[2*FLENGTH], t[LENGTH], R[LENGTH];
     Plasma_pars P;
 
-    Set_pars(argv[1], P);
+    Set_pars(argv[1], &P);
 
-    Spectrum(f, S, P);
+    Spectrum(f, S, &P);
+	
+	ACF(t, R, S);
 
     ofstream out;
 	out.open("Spectrum.dat");
@@ -31,6 +34,13 @@ int main(int argc, char* argv[])
 	{
 		out<<f[x]<<"\t";
 		out<<S[x]<<"\n";
+	}
+	out.close();
+	out.open("ACF.dat");
+	for(size_t x=0; x<LENGTH; x++)
+	{
+		out<<t[x]<<"\t";
+		out<<R[x]<<"\n";
 	}
 	out.close();
 }
