@@ -1,4 +1,5 @@
 #include "Plasma_funcs.h"
+#include "FFT.h""
 
 complex<double> cintegral(complex<double> a, complex<double> b, unsigned step_count) 
 {
@@ -113,7 +114,18 @@ void Spectrum(double *x, double *y, Plasma_pars *P)
 
 void ACF(double *x, double *y, double *S)
 {
-	fftw_complex *Sp, *Cp;
+    double *SS=new double[2*FLENGTH];
+    ShortComplex *a=new ShortComplex[2*FLENGTH];
+    for (int i=0; i <= 2*FLENGTH; i++)
+    {
+        a[i].re=S[i];
+        a[i].im=0.0;
+    }
+    universal_fft(a, 2*FLENGTH, false);
+    for(int i=0; i <= 2*FLENGTH; i++)
+            SS[i]=sqrt(a[i].re*a[i].re+a[i].im*a[i].im);
+
+    /*fftw_complex *Sp, *Cp;
 	fftw_plan Plan;
 	for(size_t i=0; i<LENGTH; i++)
 	{
@@ -130,17 +142,17 @@ void ACF(double *x, double *y, double *S)
 		Sp[w+FLENGTH][0]=S[w];
 		Sp[w+FLENGTH][1]=0.0;
 	}
-	fftw_execute(Plan);
-	double Norm=sqrt(Cp[0][0]*Cp[0][0]+Cp[0][1]*Cp[0][1]);
+    fftw_execute(Plan);
+    double Norm=sqrt(Cp[0][0]*Cp[0][0]+Cp[0][1]*Cp[0][1]);*/
 	for(size_t tau=0; tau<LENGTH; tau++)
 	{
 		x[tau]=double(tau*DELTAT);
-		y[tau]=pow(1.0-double(tau)/double(LENGTH), 2.0)*Cp[tau][0]/Norm;
+        y[tau]=a[tau].re/SS[tau];// /Norm;
 	}
 	
-	fftw_free(Sp);
+    /*fftw_free(Sp);
 	fftw_free(Cp);
-	fftw_destroy_plan(Plan);
+    fftw_destroy_plan(Plan);*/
 }
 
 void Set_pars(char* file, Plasma_pars *P)
