@@ -8,6 +8,7 @@
 #include <map>
 #include <fftw3.h>
 #include "Plasma_funcs.h"
+#include "FFT.h"
 
 using namespace std;
 

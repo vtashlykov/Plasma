@@ -1,5 +1,4 @@
 #include "Plasma_funcs.h"
-#include "FFT.h""
 
 complex<double> cintegral(complex<double> a, complex<double> b, unsigned step_count) 
 {
@@ -116,14 +115,16 @@ void ACF(double *x, double *y, double *S)
 {
     double *SS=new double[2*FLENGTH];
     ShortComplex *a=new ShortComplex[2*FLENGTH];
-    for (int i=0; i <= 2*FLENGTH; i++)
+    for (int i=0; i < FLENGTH; i++)
     {
-        a[i].re=S[i];
+        a[i].re=S[i+FLENGTH];
         a[i].im=0.0;
+		a[i+FLENGTH].re=S[i];
+        a[i+FLENGTH].im=0.0;
     }
-    universal_fft(a, 2*FLENGTH, false);
+    universal_fft(a, 2*FLENGTH, true);
     for(int i=0; i <= 2*FLENGTH; i++)
-            SS[i]=sqrt(a[i].re*a[i].re+a[i].im*a[i].im);
+		SS[i]=sqrt(a[i].re*a[i].re+a[i].im*a[i].im);
 
     /*fftw_complex *Sp, *Cp;
 	fftw_plan Plan;
@@ -147,7 +148,7 @@ void ACF(double *x, double *y, double *S)
 	for(size_t tau=0; tau<LENGTH; tau++)
 	{
 		x[tau]=double(tau*DELTAT);
-        y[tau]=a[tau].re/SS[tau];// /Norm;
+        y[tau]=a[tau].re/SS[0];// /Norm;
 	}
 	
     /*fftw_free(Sp);

@@ -1,4 +1,5 @@
-#include "fft.h"
+#include "FFT.h"
+#include <math.h>
 
 // This array contains values from 0 to 255 with reverse bit order
 static unsigned char reverse256[]= {
@@ -40,9 +41,11 @@ static unsigned char reverse256[]= {
 static long double temp;
 inline void operator+=(ShortComplex &x, const Complex &y)        { x.re += (double)y.re; x.im += (double)y.im; }
 inline void operator-=(ShortComplex &x, const Complex &y)        { x.re -= (double)y.re; x.im -= (double)y.im; }
-inline void operator*=(Complex &x, const Complex &y)        { temp = x.re; x.re = temp * y.re - x.im * y.im; x.im = temp * y.im + x.im * y.re; }
-inline void operator*=(Complex &x, const ShortComplex &y)    { temp = x.re; x.re = temp * y.re - x.im * y.im; x.im = temp * y.im + x.im * y.re; }
+inline void operator*=(Complex &x,        const Complex &y)        { temp = x.re; x.re = temp * y.re - x.im * y.im; x.im = temp * y.im + x.im * y.re; }
+inline void operator*=(Complex &x,        const ShortComplex &y)    { temp = x.re; x.re = temp * y.re - x.im * y.im; x.im = temp * y.im + x.im * y.re; }
 inline void operator/=(ShortComplex &x, double div)                { x.re /= div; x.im /= div; }
+inline void operator/=(Complex &x, double div)                { x.re /= div; x.im /= div; }
+inline void operator*=(ShortComplex&x, const ShortComplex &y)    { double temp = x.re; x.re = temp * y.re - x.im * y.im; x.im = temp * y.im + x.im * y.re; }
 
 //This is array exp(-2*pi*j/2^n) for n= 1,...,32
 //exp(-2*pi*j/2^n) = Complex( cos(2*pi/2^n), -sin(2*pi/2^n) )
@@ -154,4 +157,224 @@ void fft(ShortComplex *x, int T, bool complement)
         for( I = 0; I < Nmax; I++ )
             x[I] /= Nmax;
     }
+}
+
+#define M_PI (3.1415926535897932384626433832795)
+
+inline void complex_mul(ShortComplex *z, const ShortComplex *z1, const Complex *z2)
+{
+    z->re = (double)(z1->re * z2->re - z1->im * z2->im);
+    z->im = (double)(z1->re * z2->im + z1->im * z2->re);
+}
+
+static ShortComplex *createWstore(unsigned int Nmax)
+{
+    unsigned int N, Skew, Skew2;
+    ShortComplex *Wstore, *Warray, *WstoreEnd;
+    Complex WN, *pWN;
+
+    Skew2 = Nmax >> 1;
+    Wstore = new ShortComplex[Skew2];
+    WstoreEnd = Wstore + Skew2;
+    Wstore[0].re = 1.0;
+    Wstore[0].im = 0.0;
+
+    for(N = 4, pWN = W2n + 1, Skew = Skew2 >> 1; N <= Nmax; N += N, pWN++, Skew2 = Skew, Skew >>= 1)
+    {
+        //WN = W(1, N) = exp(-2*pi*j/N)
+        WN= *pWN;
+        for(Warray = Wstore; Warray < WstoreEnd; Warray += Skew2)
+            complex_mul(Warray + Skew, Warray, &WN);
+    }
+    return Wstore;
+}
+
+/*static void fft_step(ShortComplex *x, unsigned int T, bool complement, const ShortComplex *Wstore)
+{
+    unsigned int Nmax, I, J, N, Nd2, k, m, Skew, mpNd2, Step;
+    unsigned char *Ic = (unsigned char*) &I;
+    unsigned char *Jc = (unsigned char*) &J;
+    ShortComplex S;
+    const ShortComplex *Warray;
+    Complex Temp;
+
+    Nmax = 1 << T;
+
+    //first interchanging
+    for(I = 1; I < Nmax - 1; I++)
+    {
+        Jc[0] = reverse256[Ic[3]];
+        Jc[1] = reverse256[Ic[2]];
+        Jc[2] = reverse256[Ic[1]];
+        Jc[3] = reverse256[Ic[0]];
+        J >>= (32 - T);
+        if (I < J)
+        {
+            S = x[I];
+            x[I] = x[J];
+            x[J] = S;
+        }
+    }
+
+    //main loop
+    for(N = 2, Nd2 = 1, Skew = Nmax >> 1, Step= 1; N <= Nmax; Nd2 = N, N += N, Skew >>= 1, Step++)
+    {
+        for(Warray = Wstore, k = 0; k < Nd2; k++, Warray += Skew)
+        {
+            for(m = k; m < Nmax; m += N)
+            {
+                Temp = *Warray;
+                if (complement)
+                    Temp.im= -Temp.im;
+                mpNd2= m + Nd2;
+                Temp *= x[mpNd2];
+                x[mpNd2] = x[m];
+                x[mpNd2] -= Temp;
+                x[m] += Temp;
+            }
+        }
+    }
+}*/
+
+static void fft_step(ShortComplex *x, unsigned int T, bool complement, const ShortComplex *Wstore)
+{
+    unsigned int Nmax, I, J, N, Nd2, N2, k, Skew, Step;
+    unsigned char *Ic= (unsigned char*) &I;
+    unsigned char *Jc= (unsigned char*) &J;
+    ShortComplex S;
+
+    Nmax= 1 << T;
+
+    double cmul= complement ? -1.0 : +1.0;
+
+    //first interchanging
+    for(I = 1; I < Nmax - 1; I++)
+    {
+        Jc[0]= reverse256[Ic[3]];
+        Jc[1]= reverse256[Ic[2]];
+        Jc[2]= reverse256[Ic[1]];
+        Jc[3]= reverse256[Ic[0]];
+        J >>= (32 - T);
+        if (I < J)
+        {
+            S= x[I];
+            x[I]= x[J];
+            x[J]= S;
+        }
+    }
+
+    double *Warray;
+    double Wre, Wim;
+    double Tre, Tim;
+    double *arr= (double*)x;
+    double *arrEnd= arr + (Nmax + Nmax);
+
+    //main loop
+    for(N= 2, Skew= Nmax, Step= 1; N <= Nmax; N += N, Skew >>= 1, Step++)
+    {
+        N2= N + N;
+        Nd2= (N >> 1);
+        for(Warray= (double*)Wstore, k= 0; k < Nd2; k++, Warray += Skew)
+        {
+            Wre= *Warray;
+            Wim= cmul*Warray[1];
+            for(double *x1re= arr + (k + k); x1re < arrEnd; x1re+= N2)
+            {
+                double *x1im= x1re + 1;
+                double *x2re= x1re + N;
+                double *x2im= x2re + 1;
+                Tre = Wre * *x2re - Wim * *x2im;
+                Tim = Wre * *x2im + Wim * *x2re;
+                *x2re= *x1re - Tre;
+                *x2im= *x1im - Tim;
+                *x1re+= Tre;
+                *x1im+= Tim;
+            }
+        }
+    }
+}
+
+/*
+  x: x - array of items
+  N: N - number of items in array
+  complement: false - normal (direct) transformation, true - reverse transformation
+*/
+void universal_fft(ShortComplex *x, int N, bool complement)
+{
+    ShortComplex *x_;
+    ShortComplex *w;
+	ShortComplex *Wstore;
+
+    int T;
+	T= (int)floor(log((double)N) / log(2.0) + 0.5);
+    if (1 << T == N)
+    {
+		Wstore= createWstore(N);
+		fft_step(x, T, complement, Wstore);
+		if (complement)
+        {
+            for(int i= 0; i < N; i++)
+                x[i]/= N;
+        }
+		delete [] Wstore;
+		return;
+	}
+    //find N', T
+    int N2= N+N;
+    int N_;
+    long double arg;
+    for(N_= 1, T= 0; N_ < N2; N_+= N_, T++)
+    {
+    }
+    //find --2pi/N/2 = pi/N
+    long double piN= M_PI / N;
+    if (complement)
+        piN= -piN;
+    //find x_[n] = x[n]*e^--2*j*pi*n*n/N/2 = x[n]*e^j*piN*n*n
+    x_= new ShortComplex[N_];
+    Complex v;
+    int n;
+    for(n= 0; n < N; ++n)
+    {
+        arg= piN*n*n;
+        v.re= cosl(arg);
+        v.im= sinl(arg);
+        complex_mul(x_ + n, x + n, &v);
+    }
+    for(; n < N_; ++n)
+        x_[n].re= x_[n].im= 0;
+
+    //find w[n] = e^-j*2*pi*(2*N-2-n)^2/N/2= e^-j*piN*(2*N-2-n)^2
+    w= new ShortComplex[N_];
+    int N22= 2*N - 2;
+    for(n= 0; n < N_; ++n, --N22)
+    {
+        arg= -piN*N22*N22;
+        w[n].re= (double)cos(arg);
+        w[n].im= (double)sin(arg);
+    }
+    //FFT1
+    Wstore= createWstore(N_);
+    fft_step(x_, T, false, Wstore);
+    //FFT2
+    fft_step(w, T, false, Wstore);
+    //svertka
+    for(n= 0; n < N_; ++n)
+        x_[n]*= w[n];
+    //FFT3 (complement)
+    fft_step(x_, T, true, Wstore);
+    //find X[n] = X_[n]*e^--j*2*pi*n*n/N/2 = X_[n]*e^j*piN*n*n
+    for(n= 0, N22= 2*N - 2; n < N; ++n, --N22)
+    {
+        arg= piN*n*n;
+        v.re= cosl(arg);
+        v.im= sinl(arg);
+        v/= N_;
+        if (complement)
+            v/= N;
+        complex_mul(x + n, x_ + N22, &v);
+    }
+    delete [] x_;
+    delete [] w;
+    delete [] Wstore;
 }
