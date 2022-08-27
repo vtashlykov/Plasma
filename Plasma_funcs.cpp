@@ -135,7 +135,7 @@ void ACF(double *x, double *y, double *S)
 	for(size_t tau=0; tau<LENGTH; tau++)
 	{
 		x[tau]=double(tau*DELTAT);
-		y[tau]=Cp[tau][0]/Norm;
+		y[tau]=pow(1.0-double(tau)/double(LENGTH), 2.0)*Cp[tau][0]/Norm;
 	}
 	
 	fftw_free(Sp);
