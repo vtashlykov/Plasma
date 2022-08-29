@@ -8,6 +8,6 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_library(Plasma SHARED Plasma_funcs.h Plasma_funcs.cpp)
+add_library(Plasma SHARED Plasma_funcs.h Plasma_funcs.cpp FFT.h FFT.cpp)
 
 target_compile_definitions(Plasma PRIVATE PLASMA_LIBRARY)
