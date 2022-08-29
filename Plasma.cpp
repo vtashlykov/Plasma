@@ -6,7 +6,7 @@
 #include <complex>
 #include <vector>
 #include <map>
-#include <fftw3.h>
+// #include <fftw3.h>
 #include "Plasma_funcs.h"
 #include "FFT.h"
 
