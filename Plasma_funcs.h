@@ -10,8 +10,8 @@
 #include "FFT.h"
 
 #define PI 3.14159265
-#define FLENGTH 5000
-#define DELTAF 10
+#define FLENGTH 1250
+#define DELTAF 100
 #define DELTAT 4
 #define LENGTH 175
 

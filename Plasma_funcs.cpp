@@ -56,45 +56,50 @@ void Spectrum(double *x, double *y, Plasma_pars *P)
 			for(int i=0; i<2*FLENGTH; i++)
 			{
 				f=double(i-FLENGTH)*double(DELTAF);
-				w=2.0*PI*f;
-                Xe=(w-im*P->nu_e)/(k*a);
-                Xi=(w-im*P->nu_i)/(k*b);
-				SumE=cintegral(izero, Xe, 1000);
-				SumI=cintegral(izero, Xi, 1000);
-				if(!isnormal(real(SumE)))
-					SumE=complex<double> (0.0, 0.0);
-				if(!isnormal(real(SumI)))
-					SumI=complex<double> (0.0, 0.0);
-					
-				Rwe=1.0-2.0*Xe*exp(-Xe*Xe)*SumE;
-				Iwe=sqrt(PI)*Xe*exp(-Xe*Xe);
-				Rwi=1.0-2.0*Xi*exp(-Xi*Xi)*SumI;
-				Iwi=sqrt(PI)*Xi*exp(-Xi*Xi);
-
-                if(P->nu_e==0.0 or P->nu_i==0.0)
+				if(abs(f)<10000.0)
 				{
-					Ae=complex<double> (1.0+alpha*alpha*R*real(Rwi), alpha*alpha*R*real(Iwi));
-					Ai=complex<double> (alpha*alpha*real(Rwe), alpha*alpha*real(Iwe));
-					epsilon=complex<double> (1.0+alpha*alpha*real(Rwe+R*Rwi), alpha*alpha*real(Iwe+R*Iwi));
-                    Y[i]=2.0*sqrt(PI)/(k*a)*(sqrt(iMass*P->Te/(eMass*P->Ti))*real(exp(-Xi*Xi))*norm(Ai))/norm(epsilon);
+					w=2.0*PI*f;
+					Xe=(w-im*P->nu_e)/(k*a);
+					Xi=(w-im*P->nu_i)/(k*b);
+					SumE=cintegral(izero, Xe, 1000);
+					SumI=cintegral(izero, Xi, 1000);
+					if(!isnormal(real(SumE)))
+						SumE=complex<double> (0.0, 0.0);
+					if(!isnormal(real(SumI)))
+						SumI=complex<double> (0.0, 0.0);
+						
+					Rwe=1.0-2.0*Xe*exp(-Xe*Xe)*SumE;
+					Iwe=sqrt(PI)*Xe*exp(-Xe*Xe);
+					Rwi=1.0-2.0*Xi*exp(-Xi*Xi)*SumI;
+					Iwi=sqrt(PI)*Xi*exp(-Xi*Xi);
+
+					if(P->nu_e==0.0 or P->nu_i==0.0)
+					{
+						Ae=complex<double> (1.0+alpha*alpha*R*real(Rwi), alpha*alpha*R*real(Iwi));
+						Ai=complex<double> (alpha*alpha*real(Rwe), alpha*alpha*real(Iwe));
+						epsilon=complex<double> (1.0+alpha*alpha*real(Rwe+R*Rwi), alpha*alpha*real(Iwe+R*Iwi));
+						Y[i]=2.0*sqrt(PI)/(k*a)*(sqrt(iMass*P->Te/(eMass*P->Ti))*real(exp(-Xi*Xi))*norm(Ai))/norm(epsilon);
+					}
+					else
+					{
+						De=(im*P->nu_e)/(k*a)*(2.0*exp(-Xe*Xe)*SumE+im*sqrt(PI)*exp(-Xe*Xe));
+						Di=(im*P->nu_i)/(k*b)*(2.0*exp(-Xi*Xi)*SumI+im*sqrt(PI)*exp(-Xi*Xi));
+
+						Be=(1.0/(k*a*norm(1.0+De)))*imag(2.0*exp(-Xe*Xe)*SumE+im*sqrt(PI)*exp(-Xe*Xe))\
+							-norm(De)/(P->nu_e*norm(1.0+De));
+						Bi=(1.0/(k*b*norm(1.0+Di)))*imag(2.0*exp(-Xi*Xi)*SumI+im*sqrt(PI)*exp(-Xi*Xi))\
+							-norm(Di)/(P->nu_i*norm(1.0+Di));
+
+						Ce=alpha*alpha*(Rwe-im*Iwe)/(1.0+De);
+						Ci=R*alpha*alpha*(Rwi-im*Iwi)/(1.0+Di);
+						epsilon=1.0+Ce+Ci;
+						// cout<<Rwe+im*Iwe<<"\t"<<Rwi+im*Iwi<<"\t";
+						// cout<<De<<"\t"<<Di<<"\t"<<Be<<"\t"<<Bi<<"\t"<<Ce<<"\t"<<Ci<<"\n";
+						Y[i]=norm(Ce/(1.0+Ce+Ci))*Bi;   
+					}
 				}
 				else
-				{
-                    De=(im*P->nu_e)/(k*a)*(2.0*exp(-Xe*Xe)*SumE+im*sqrt(PI)*exp(-Xe*Xe));
-                    Di=(im*P->nu_i)/(k*b)*(2.0*exp(-Xi*Xi)*SumI+im*sqrt(PI)*exp(-Xi*Xi));
-
-					Be=(1.0/(k*a*norm(1.0+De)))*imag(2.0*exp(-Xe*Xe)*SumE+im*sqrt(PI)*exp(-Xe*Xe))\
-                        -norm(De)/(P->nu_e*norm(1.0+De));
-					Bi=(1.0/(k*b*norm(1.0+Di)))*imag(2.0*exp(-Xi*Xi)*SumI+im*sqrt(PI)*exp(-Xi*Xi))\
-                        -norm(Di)/(P->nu_i*norm(1.0+Di));
-
-					Ce=alpha*alpha*(Rwe-im*Iwe)/(1.0+De);
-					Ci=R*alpha*alpha*(Rwi-im*Iwi)/(1.0+Di);
-					epsilon=1.0+Ce+Ci;
-					// cout<<Rwe+im*Iwe<<"\t"<<Rwi+im*Iwi<<"\t";
-					// cout<<De<<"\t"<<Di<<"\t"<<Be<<"\t"<<Bi<<"\t"<<Ce<<"\t"<<Ci<<"\n";
-					Y[i]=norm(Ce/(1.0+Ce+Ci))*Bi;   
-				}
+					Y[i]=0.0;
 				// Y[i]=2.0*norm((1.0+Ci)/epsilon)*Be+2.0*norm(Ce/epsilon)*Bi;
 			}
 			for(int i=0; i<2*FLENGTH; i++)
